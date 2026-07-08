@@ -262,7 +262,8 @@ img{display:block;max-width:100%;height:auto}
     .pgrid{grid-template-columns:repeat(4,1fr);gap:16px}
     .bnav{display:none}
     .topbar-nav{display:flex}
-    .tb{display:none}
+    .tb:not(.theme-toggle){display:none}
+    .tb.theme-toggle{display:flex}
     .spacer{height:40px}
 }
 
@@ -348,6 +349,113 @@ img{display:block;max-width:100%;height:auto}
     40%, 80% { transform: translateX(4px); }
 }
 .shake { animation: shake 0.4s ease-in-out; }
+
+/* ============================================
+   LIGHT MODE — Variable Overrides
+   ============================================ */
+html.light {
+    --bg: #f4f4f5;
+    --card: #ffffff;
+    --card2: #f0f0f2;
+    --border: #e4e4e7;
+    --t1: #111111;
+    --t2: #52525b;
+    --t3: #a1a1aa;
+    --primary: #ea580c;
+    --primary-hover: #c2410c;
+    --primary-bg: rgba(234,88,12,.1);
+}
+
+/* Smooth transition semua elemen saat ganti tema */
+html.light body,
+html.light .topbar,
+html.light .bnav,
+html.light .pcard,
+html.light .trust-item,
+html.light .cat,
+html.light .fltr,
+html.light .search-box,
+html.light .modal-box,
+html.light .m-stat,
+html.light .m-desc-c,
+html.light .m-qty-row,
+html.light .m-inp {
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+html.light .topbar {
+    background: rgba(244,244,245,.92);
+}
+
+html.light .bnav {
+    background: rgba(244,244,245,.92);
+}
+
+html.light .modal-box {
+    background: var(--bg);
+}
+
+html.light .m-bot {
+    background: rgba(244,244,245,.98);
+}
+
+html.light .pcard:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,.1);
+}
+
+html.light .fltr.on {
+    background: var(--t1);
+    border-color: var(--t1);
+    color: var(--bg);
+}
+
+/* ============================================
+   THEME TOGGLE BUTTON
+   ============================================ */
+.theme-toggle {
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+/* Dark mode: tampilkan bulan, sembunyikan matahari */
+.icon-moon { display: block; }
+.icon-sun  { display: none; }
+
+/* Light mode: tampilkan matahari, sembunyikan bulan */
+html.light .icon-moon { display: none; }
+html.light .icon-sun  { display: block; }
+
+/* Warna icon saat light mode */
+html.light .theme-toggle {
+    color: var(--primary);
+    background: var(--primary-bg);
+    border-color: rgba(234,88,12,.2);
+}
+
+html.light .theme-toggle:hover {
+    background: rgba(234,88,12,.2);
+    color: var(--primary-hover);
+}
+
+/* Animasi klik / pulse */
+@keyframes theme-pulse {
+    0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(249,115,22,0.5); }
+    50%  { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(249,115,22,0); }
+    100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+}
+.theme-pulse { animation: theme-pulse 0.4s ease-out; }
+
+/* Icon rotasi halus saat switch */
+.theme-toggle svg {
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease;
+}
+html.light .theme-toggle .icon-sun {
+    transform: rotate(0deg);
+}
+html:not(.light) .theme-toggle .icon-moon {
+    transform: rotate(-20deg);
+}
 
 @media(min-width:600px){
     .modal-box { max-width: 520px; left: 50%; margin-left: -260px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); border-radius: 16px; top: 50%; bottom: auto; transform: translateY(-50%) scale(0.95); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height: 85vh; visibility: hidden; overflow: hidden; }

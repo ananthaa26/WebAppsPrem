@@ -12,6 +12,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Anti-FOUC: terapkan tema sebelum render -->
+    <script>
+        (function(){
+            var t = localStorage.getItem('zann-theme');
+            if(t === 'light') document.documentElement.classList.add('light');
+        })();
+    </script>
 </head>
 
 <body>
@@ -30,10 +37,16 @@
                     <a href="#">Bantuan</a>
                 </nav>
                 <div class="topbar-right">
-                    <button class="tb" aria-label="Menu">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button class="tb theme-toggle" id="themeToggle" aria-label="Toggle tema">
+                        <!-- Moon icon (dark mode aktif) -->
+                        <svg class="icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 12h16M4 18h16" />
+                                d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                        </svg>
+                        <!-- Sun icon (light mode aktif) -->
+                        <svg class="icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                         </svg>
                     </button>
                 </div>
@@ -642,6 +655,32 @@
                 this.classList.add('on');
             });
         });
+
+        // ===== THEME TOGGLE =====
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                html.classList.add('light');
+            } else {
+                html.classList.remove('light');
+            }
+            localStorage.setItem('zann-theme', theme);
+        }
+
+        themeToggle.addEventListener('click', function() {
+            const isLight = html.classList.contains('light');
+            applyTheme(isLight ? 'dark' : 'light');
+
+            // Animasi pulse pada tombol
+            this.classList.add('theme-pulse');
+            setTimeout(() => this.classList.remove('theme-pulse'), 400);
+        });
+
+        // Init tema dari localStorage
+        const savedTheme = localStorage.getItem('zann-theme') || 'dark';
+        applyTheme(savedTheme);
     </script>
 
     <!-- BOTTOM NAV -->
