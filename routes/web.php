@@ -17,3 +17,15 @@ Route::get('/syarat-ketentuan', function () {
 Route::get('/kebijakan-privasi', function () {
     return view('privacy');
 });
+
+Route::get('/pesanan', function () {
+    return view('pesanan');
+});
+
+Route::get('/auth', function () {
+    return view('auth');
+});
+
+Route::get('/akun', function () {
+    return view('akun');
+});
