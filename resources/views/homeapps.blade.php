@@ -14,9 +14,12 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <!-- Anti-FOUC: terapkan tema sebelum render -->
     <script>
-        (function(){
+        (function () {
             var t = localStorage.getItem('zann-theme');
-            if(t === 'light') document.documentElement.classList.add('light');
+            if (!t) {
+                t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            }
+            if (t === 'light') document.documentElement.classList.add('light');
         })();
     </script>
 </head>
@@ -107,7 +110,7 @@
                                     d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                             </svg> 4.9</div>
                         <div class="p-bottom">
-                            <div class="p-price">Rp 25.000</div>
+                            <div class="p-price">Rp 5.000</div>
                             <div class="p-sold">15K terjual</div>
                         </div>
                     </div>
@@ -630,7 +633,7 @@
             localStorage.setItem('zann-theme', theme);
         }
 
-        themeToggle.addEventListener('click', function() {
+        themeToggle.addEventListener('click', function () {
             const isLight = html.classList.contains('light');
             applyTheme(isLight ? 'dark' : 'light');
 

@@ -11,6 +11,9 @@
     <script>
         (function () {
             var t = localStorage.getItem('zann-theme');
+            if (!t) {
+                t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            }
             if (t === 'light') document.documentElement.classList.add('light');
             document.designMode = 'off';
         })();
@@ -206,6 +209,11 @@
 
                     <form action="/login" method="POST" class="auth-form active" id="form-login">
                         @csrf
+                        @if($errors->any())
+                        <div style="background: rgba(255,65,108,0.15); border: 1px solid rgba(255,65,108,0.3); border-radius: 10px; padding: 12px; margin-bottom: 16px; color: #ff416c; font-size: 13px; font-weight: 600;">
+                            {{ $errors->first() }}
+                        </div>
+                        @endif
                         <div class="input-group">
                             <label>Alamat Email</label>
                             <input type="email" name="email" class="input-control" placeholder="nama@email.com" required>

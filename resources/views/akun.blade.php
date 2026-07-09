@@ -11,6 +11,9 @@
     <script>
         (function () {
             var t = localStorage.getItem('zann-theme');
+            if (!t) {
+                t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            }
             if (t === 'light') document.documentElement.classList.add('light');
         })();
     </script>
@@ -149,7 +152,16 @@
                             <div class="profile-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
                         @endif
                         <div class="profile-name">{{ auth()->user()->name }}</div>
-                        <div class="profile-email">{{ auth()->user()->email }}</div>
+                        <div class="profile-email" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            {{ auth()->user()->email }}
+                            @if(auth()->user()->email_verified_at)
+                                <svg title="Email Terverifikasi" fill="#34A853" viewBox="0 0 24 24" width="16" height="16"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                            @else
+                                <a href="/auth/verify-email/send" style="display: flex; align-items: center; color: #ff416c; text-decoration: none;" onclick="return confirm('Kirim link aktivasi ke email Anda sekarang?')" title="Belum Aktif, Klik untuk aktivasi">
+                                    <svg fill="currentColor" viewBox="0 0 24 24" width="16" height="16"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
+                                </a>
+                            @endif
+                        </div>
                     @else
                         <div class="profile-avatar">U</div>
                         <div class="profile-name">Pengguna Demo</div>
@@ -168,7 +180,7 @@
                     </div>
 
                     <div class="menu-list">
-                        <a href="#" class="menu-item">
+                        <a href="" class="menu-item">
                             <div class="menu-icon">
                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             </div>
@@ -180,7 +192,7 @@
                             </div>
                             Riwayat Pesanan
                         </a>
-                        <a href="#" class="menu-item">
+                        <a href="/hubungi-kami" class="menu-item">
                             <div class="menu-icon">
                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                             </div>
@@ -203,5 +215,28 @@
 
     @include('components.bottom-nav')
 
+    <script>
+        var themeToggle = document.getElementById('themeToggle');
+        var html = document.documentElement;
+
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                html.classList.add('light');
+            } else {
+                html.classList.remove('light');
+            }
+            localStorage.setItem('zann-theme', theme);
+        }
+
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function () {
+                var isLight = html.classList.contains('light');
+                applyTheme(isLight ? 'dark' : 'light');
+                this.classList.add('theme-pulse');
+                var self = this;
+                setTimeout(function() { self.classList.remove('theme-pulse'); }, 400);
+            });
+        }
+    </script>
 </body>
 </html>
