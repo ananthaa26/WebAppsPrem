@@ -48,15 +48,7 @@
                 <img src="/images/banner.webp" alt="Banner Promo" class="hero-banner-img">
             </div>
 
-            <!-- CATEGORIES -->
-            <div class="cats">
-                <button class="cat on">Semua</button>
-                <button class="cat">Desain</button>
-                <button class="cat">AI Tools</button>
-                <button class="cat">Streaming</button>
-                <button class="cat">Musik</button>
-                <button class="cat">Tools</button>
-            </div>
+
 
             <!-- BEST SELLER -->
             <div class="sec">

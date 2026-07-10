@@ -50,4 +50,52 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
         return redirect('/');
     }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,'.$user->id,
+        ]);
+
+        $user->name = $request->name;
+        if ($user->email !== $request->email) {
+            $user->email = $request->email;
+            $user->email_verified_at = null; // Reset verifikasi jika email diganti
+        }
+        $user->save();
+
+        return back()->with('success', 'Profil berhasil diperbarui!');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|min:6|confirmed',
+        ]);
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->with('error', 'Kata sandi saat ini tidak cocok.');
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return back()->with('success', 'Kata sandi berhasil diubah!');
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        $user = Auth::user();
+        Auth::logout();
+        $user->delete();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/')->with('success', 'Akun berhasil dihapus secara permanen.');
+    }
 }

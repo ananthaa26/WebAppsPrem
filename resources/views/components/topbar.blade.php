@@ -9,7 +9,7 @@
             <nav class="topbar-nav">
                 <a href="/" class="{{ request()->is('/') ? 'active' : '' }}">Beranda</a>
                 <a href="/pesanan" class="{{ request()->is('pesanan') ? 'active' : '' }}">Transaksi</a>
-                <a href="/akun" class="{{ request()->is('akun') ? 'active' : '' }}">Akun</a>
+                <a href="/auth" class="{{ request()->is('akun') ? 'active' : '' }}">Akun</a>
             </nav>
             <div class="topbar-right">
                 <button class="tb theme-toggle" id="themeToggle" aria-label="Toggle tema">

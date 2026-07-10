@@ -86,3 +86,12 @@ Route::get('/auth/verify-email/confirm', function (Illuminate\Http\Request $requ
     
     return redirect('/')->with('error', 'Pengguna tidak ditemukan.');
 });
+
+Route::get('/akun/setting', function () {
+    if (!auth()->check()) return redirect('/auth');
+    return view('setting');
+});
+
+Route::post('/akun/setting/profile', [AuthController::class, 'updateProfile']);
+Route::post('/akun/setting/password', [AuthController::class, 'updatePassword']);
+Route::delete('/akun/setting/delete', [AuthController::class, 'deleteAccount']);

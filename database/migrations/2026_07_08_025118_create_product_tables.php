@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_bestseller')->default(false);
             $table->unsignedBigInteger('total_sold')->default(0);
             $table->timestamps();
         });
