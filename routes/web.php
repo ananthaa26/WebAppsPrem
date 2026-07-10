@@ -4,7 +4,24 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 
 Route::get('/', function () {
-    return view('homeapps');
+    $categories = \App\Models\ProductCategory::where('is_active', true)->orderBy('sort_order')->get();
+    
+    // Ambil produk bestseller
+    $bestsellers = \App\Models\Product::with(['category', 'variants' => function($q){
+        $q->where('is_active', true)->orderBy('sort_order');
+    }])
+        ->where('is_active', true)
+        ->where('is_bestseller', true)
+        ->get();
+
+    // Ambil semua produk
+    $products = \App\Models\Product::with(['category', 'variants' => function($q){
+        $q->where('is_active', true)->orderBy('sort_order');
+    }])
+        ->where('is_active', true)
+        ->get();
+
+    return view('homeapps', compact('categories', 'bestsellers', 'products'));
 });
 
 Route::get('/hubungi-kami', function () {

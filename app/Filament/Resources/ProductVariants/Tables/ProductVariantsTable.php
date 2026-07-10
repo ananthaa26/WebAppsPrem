@@ -24,10 +24,10 @@ class ProductVariantsTable
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('price')
-                    ->money()
+                    ->money('IDR', divideBy: 1, locale: 'id')
                     ->sortable(),
                 TextColumn::make('original_price')
-                    ->money()
+                    ->money('IDR', divideBy: 1, locale: 'id')
                     ->sortable(),
                 TextColumn::make('stock')
                     ->numeric()

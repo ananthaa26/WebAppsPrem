@@ -30,7 +30,7 @@
             Tim ZANNSTORE
         </div>
         <div class="footer">
-            &copy; {{ date('Y') }} ZANNSTORE. Hak Cipta Dilindungi.
+            &copy; {{ date('Y') }} ZANNSTORE. All Rights Reserved.
         </div>
     </div>
 </body>

@@ -22,7 +22,8 @@ class ProductForm
                 TextInput::make('slug')
                     ->required(),
                 FileUpload::make('image')
-                    ->image(),
+                    ->image()
+                    ->disk('public'),
                 Textarea::make('description')
                     ->columnSpanFull(),
                 Toggle::make('is_active')

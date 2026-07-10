@@ -22,9 +22,161 @@
             if (t === 'light') document.documentElement.classList.add('light');
         })();
     </script>
+    <style>
+        /* SEARCH OVERLAY & RESULTS */
+        .search-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s ease;
+            pointer-events: none;
+        }
+
+        .search-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .search-wrap {
+            position: relative;
+            z-index: 300;
+            /* Always above overlay */
+        }
+
+        .search-box {
+            position: relative;
+            z-index: 300;
+        }
+
+        .search-results {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            z-index: 300;
+        }
+
+        .search-results.show {
+            display: block;
+        }
+
+        .s-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            cursor: pointer;
+            border-radius: 10px;
+            transition: background 0.15s;
+        }
+
+        .s-item:last-child {
+            border-bottom: none;
+        }
+
+        .s-item:hover {
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .s-ico {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .s-ico img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .s-ico svg {
+            width: 44px;
+            height: 44px;
+        }
+
+        .s-info {
+            flex: 1;
+        }
+
+        .s-cat {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #f97316;
+            margin-bottom: 2px;
+        }
+
+        .s-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .s-price {
+            color: #aaa;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .s-empty {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        html.light .search-results {
+            background: #fff;
+            border-color: #e5e5e5;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        html.light .s-item {
+            border-bottom-color: #f0f0f0;
+        }
+
+        html.light .s-item:hover {
+            background: #f5f5f5;
+        }
+
+        html.light .s-title {
+            color: #111;
+        }
+
+        html.light .s-price {
+            color: #666;
+        }
+    </style>
 </head>
 
 <body>
+    <div class="search-overlay" id="searchOverlay"></div>
 
     <!-- TOP BAR -->
     @include('components.topbar')
@@ -39,8 +191,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    <input type="text" placeholder="Cari produk..." id="search-input">
+                    <input type="text" placeholder="Cari produk..." id="search-input" autocomplete="off">
                 </div>
+                <div class="search-results" id="searchResults"></div>
             </div>
 
             <!-- HERO BANNER -->
@@ -61,97 +214,63 @@
                     <a href="#" class="sec-more">Lihat Semua →</a>
                 </div>
                 <div class="pgrid">
-                    <!-- CapCut -->
-                    <div class="pcard" data-title="CapCut Pro" data-price="44900"
-                        data-desc="Fitur lengkap tanpa watermark. Cocok buat edit reels & TikTok." data-dur="1 Bulan">
-                        <div class="rk rk-1">1</div>
-                        <span class="p-tag p-tag-hot">HOT</span>
-                        <div class="p-ico" style="background:#000;border-color:#333">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#000" />
-                                <path d="M14 24l10-6v5l10-5v12l-10-5v5L14 24z" fill="white" />
-                            </svg>
+                    @forelse($bestsellers as $index => $product)
+                        @php
+                            $firstVariant = $product->variants->first();
+                            $price = $firstVariant ? $firstVariant->price : 0;
+                            $stock = $firstVariant ? $firstVariant->stock : 0;
+
+                            $duration = '1 Bulan';
+                            if ($firstVariant) {
+                                $days = $firstVariant->duration_days;
+                                if ($days == 365) {
+                                    $duration = '12 Bulan';
+                                } elseif ($days % 30 == 0) {
+                                    $duration = ($days / 30) . ' Bulan';
+                                } else {
+                                    $duration = $days . ' Hari';
+                                }
+                            }
+                        @endphp
+                        <div class="pcard" data-title="{{ $product->name }}" data-price="{{ $price }}"
+                            data-desc="{{ $product->description }}" data-dur="{{ $duration }}"
+                            data-cat-name="{{ $product->category->name ?? 'PREMIUM APP' }}" data-bestseller="true"
+                            data-stock="{{ $stock }}">
+                            @if($index < 3)
+                                <div class="rk rk-{{ $index + 1 }}">{{ $index + 1 }}</div>
+                            @endif
+                            @if($firstVariant && $firstVariant->label)
+                                <span class="p-tag p-tag-hot">{{ strtoupper($firstVariant->label) }}</span>
+                            @endif
+                            <div class="p-ico" style="background:#000;border-color:#333">
+                                @if($product->image)
+                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}"
+                                        style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+                                @else
+                                    <svg viewBox="0 0 48 48" fill="none">
+                                        <rect width="48" height="48" rx="10" fill="#000" />
+                                        <path d="M14 24l10-6v5l10-5v12l-10-5v5L14 24z" fill="white" />
+                                    </svg>
+                                @endif
+                            </div>
+                            <div class="p-name">{{ $product->name }}</div>
+                            <div class="p-dur">{{ $duration }}</div>
+                            <div class="p-rating"><svg viewBox="0 0 24 24">
+                                    <path
+                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg> 4.9</div>
+                            <div class="p-bottom">
+                                <div class="p-price">Rp {{ number_format($price, 0, ',', '.') }}</div>
+                                <div class="p-sold">
+                                    {{ $product->total_sold ? number_format($product->total_sold, 0, ',', '.') : 0 }}
+                                    terjual
+                                </div>
+                            </div>
                         </div>
-                        <div class="p-name">CapCut Pro</div>
-                        <div class="p-dur">1 Bulan</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.9</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 44.900</div>
-                            <div class="p-sold">77K terjual</div>
-                        </div>
-                    </div>
-                    <!-- Canva -->
-                    <div class="pcard" data-title="Canva Pro" data-price="25000"
-                        data-desc="Akses semua template premium Canva. Cocok buat desain konten, presentasi, poster."
-                        data-dur="1 Bulan">
-                        <div class="rk rk-2">2</div>
-                        <div class="p-ico" style="background:#7d2ae8;border-color:#9b59b6">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#7d2ae8" /><text x="24" y="32"
-                                    text-anchor="middle" font-size="22" font-weight="800" fill="white"
-                                    font-family="Arial">C</text>
-                            </svg>
-                        </div>
-                        <div class="p-name">Canva Pro</div>
-                        <div class="p-dur">1 Bulan</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.9</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 5.000</div>
-                            <div class="p-sold">15K terjual</div>
-                        </div>
-                    </div>
-                    <!-- Spotify -->
-                    <div class="pcard" data-title="Spotify Premium" data-price="8900"
-                        data-desc="Dengerin musik tanpa iklan, bisa download lagu, kualitas audio HiFi."
-                        data-dur="1 Bulan">
-                        <div class="rk rk-3">3</div>
-                        <div class="p-ico" style="background:#1db954;border-color:#17a349">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#1db954" />
-                                <path
-                                    d="M24 12c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12S30.627 12 24 12zm5.25 17.25a.75.75 0 01-1.032.258c-2.82-1.728-6.372-2.118-10.554-1.158a.75.75 0 01-.336-1.464c4.578-1.05 8.502-.6 11.664 1.332a.75.75 0 01.258 1.032zm1.404-3.12a.938.938 0 01-1.29.312c-3.228-1.986-8.148-2.562-11.97-1.404a.938.938 0 01-.528-1.794c4.368-1.29 9.798-.654 13.476 1.596a.938.938 0 01.312 1.29zm.12-3.252c-3.87-2.298-10.254-2.508-13.944-1.386a1.125 1.125 0 01-.648-2.148c4.242-1.284 11.286-1.038 15.732 1.602a1.125 1.125 0 01-1.14 1.932z"
-                                    fill="white" />
-                            </svg>
-                        </div>
-                        <div class="p-name">Spotify Premium</div>
-                        <div class="p-dur">1 Bulan</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.9</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 8.900</div>
-                            <div class="p-sold">15K terjual</div>
-                        </div>
-                    </div>
-                    <!-- Netflix -->
-                    <div class="pcard" data-title="Netflix Premium" data-price="20900"
-                        data-desc="Nonton film & series tanpa batas. Kualitas 4K Ultra HD. 4 layar sekaligus."
-                        data-dur="1 Bulan">
-                        <div class="p-ico" style="background:#e50914;border-color:#c0070f">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#e50914" /><text x="24" y="33"
-                                    text-anchor="middle" font-size="20" font-weight="900" fill="white"
-                                    font-family="Arial">N</text>
-                            </svg>
-                        </div>
-                        <div class="p-name">Netflix Premium</div>
-                        <div class="p-dur">1 Bulan</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.8</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 20.900</div>
-                            <div class="p-sold">9K terjual</div>
-                        </div>
-                    </div>
+                    @empty
+                        <p style="color: #999; text-align: center; width: 100%; padding: 20px;">Belum ada produk best
+                            seller.</p>
+                    @endforelse
                 </div>
             </div>
 
@@ -206,193 +325,77 @@
                 <div class="sec-head">
                     <div class="sec-t">Semua Produk</div>
                 </div>
-                <div class="filters">
+
+                <!-- CATEGORY FILTER -->
+                <div class="cats" style="margin-bottom: 20px;">
+                    <button class="cat on" data-cat="all">Semua</button>
+                    @foreach($categories as $category)
+                        <button class="cat" data-cat="{{ $category->id }}">{{ $category->name }}</button>
+                    @endforeach
+                </div>
+
+                <div class="filters" style="display:none;">
                     <button class="fltr on">Terlaris</button>
                     <button class="fltr">Termurah</button>
                     <button class="fltr">Terbaru</button>
                 </div>
-                <div class="pgrid">
-                    <!-- Lightroom -->
-                    <div class="pcard" data-title="Adobe Lightroom" data-price="29900"
-                        data-desc="Edit foto profesional langsung dari HP. Preset premium dan fitur AI lengkap."
-                        data-dur="1 Tahun">
-                        <div class="p-ico"
-                            style="background:linear-gradient(135deg,#001d3d,#003566);border-color:#003566">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#001d3d" /><text x="24" y="33"
-                                    text-anchor="middle" font-size="18" font-weight="800" fill="#31a8ff"
-                                    font-family="Arial">Lr</text>
-                            </svg>
+                <div class="pgrid" id="allProductsGrid">
+                    @forelse($products as $product)
+                        @php
+                            $firstVariant = $product->variants->first();
+                            $price = $firstVariant ? $firstVariant->price : 0;
+                            $stock = $firstVariant ? $firstVariant->stock : 0;
+
+                            $duration = '1 Bulan';
+                            if ($firstVariant) {
+                                $days = $firstVariant->duration_days;
+                                if ($days == 365) {
+                                    $duration = '12 Bulan';
+                                } elseif ($days % 30 == 0) {
+                                    $duration = ($days / 30) . ' Bulan';
+                                } else {
+                                    $duration = $days . ' Hari';
+                                }
+                            }
+                        @endphp
+                        <div class="pcard all-pcard" data-cat="{{ $product->category_id }}"
+                            data-title="{{ $product->name }}" data-price="{{ $price }}"
+                            data-desc="{{ $product->description }}" data-dur="{{ $duration }}"
+                            data-cat-name="{{ $product->category->name ?? 'PREMIUM APP' }}"
+                            data-bestseller="{{ $product->is_bestseller ? 'true' : 'false' }}" data-stock="{{ $stock }}">
+                            @if($firstVariant && $firstVariant->label)
+                                <span class="p-tag p-tag-hot">{{ strtoupper($firstVariant->label) }}</span>
+                            @endif
+                            <div class="p-ico"
+                                style="background:linear-gradient(135deg,#001d3d,#003566);border-color:#003566">
+                                @if($product->image)
+                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}"
+                                        style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+                                @else
+                                    <svg viewBox="0 0 48 48" fill="none">
+                                        <rect width="48" height="48" rx="10" fill="#001d3d" /><text x="24" y="33"
+                                            text-anchor="middle" font-size="18" font-weight="800" fill="#31a8ff"
+                                            font-family="Arial">{{ substr($product->name, 0, 1) }}</text>
+                                    </svg>
+                                @endif
+                            </div>
+                            <div class="p-name">{{ $product->name }}</div>
+                            <div class="p-dur">{{ $duration }}</div>
+                            <div class="p-rating"><svg viewBox="0 0 24 24">
+                                    <path
+                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg> 4.8</div>
+                            <div class="p-bottom">
+                                <div class="p-price">Rp {{ number_format($price, 0, ',', '.') }}</div>
+                                <div class="p-sold">
+                                    {{ $product->total_sold ? number_format($product->total_sold, 0, ',', '.') : 0 }}
+                                    terjual
+                                </div>
+                            </div>
                         </div>
-                        <div class="p-name">Adobe Lightroom</div>
-                        <div class="p-dur">1 Tahun</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.9</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 29.900</div>
-                            <div class="p-sold">8K terjual</div>
-                        </div>
-                    </div>
-                    <!-- Alight Motion -->
-                    <div class="pcard" data-title="Alight Motion" data-price="19900"
-                        data-desc="Aplikasi edit video terbaik untuk Android. Bisa animasi, efek motion graphics, dan lebih."
-                        data-dur="1 Tahun">
-                        <div class="p-ico"
-                            style="background:linear-gradient(135deg,#0f0c29,#302b63);border-color:#302b63">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#302b63" /><text x="24" y="33"
-                                    text-anchor="middle" font-size="16" font-weight="800" fill="#00d2ff"
-                                    font-family="Arial">Am</text>
-                            </svg>
-                        </div>
-                        <div class="p-name">Alight Motion</div>
-                        <div class="p-dur">1 Tahun</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.9</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 19.900</div>
-                            <div class="p-sold">6K terjual</div>
-                        </div>
-                    </div>
-                    <!-- YouTube -->
-                    <div class="pcard" data-title="YouTube Premium" data-price="12900"
-                        data-desc="Nonton tanpa iklan, bisa download video, YouTube Music gratis. Cocok banget buat pelajar."
-                        data-dur="1 Bulan">
-                        <span class="p-tag p-tag-hot">TRENDING</span>
-                        <div class="p-ico" style="background:#ff0000;border-color:#cc0000">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#ff0000" />
-                                <path d="M34.5 24L20 32V16l14.5 8z" fill="white" />
-                            </svg>
-                        </div>
-                        <div class="p-name">YouTube Premium</div>
-                        <div class="p-dur">1 Bulan</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.9</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 12.900</div>
-                            <div class="p-sold">10K terjual</div>
-                        </div>
-                    </div>
-                    <!-- ChatGPT -->
-                    <div class="pcard" data-title="ChatGPT Plus" data-price="89900"
-                        data-desc="Akses GPT-4o, DALL-E, Advanced Data Analysis, dan fitur AI terkini dari OpenAI."
-                        data-dur="1 Bulan">
-                        <span class="p-tag p-tag-new">NEW</span>
-                        <div class="p-ico" style="background:#10a37f;border-color:#0d8a6c">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#10a37f" /><text x="24" y="33"
-                                    text-anchor="middle" font-size="18" font-weight="800" fill="white"
-                                    font-family="Arial">AI</text>
-                            </svg>
-                        </div>
-                        <div class="p-name">ChatGPT Plus</div>
-                        <div class="p-dur">1 Bulan</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.8</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 89.900</div>
-                            <div class="p-sold">5K terjual</div>
-                        </div>
-                    </div>
-                    <!-- Microsoft 365 -->
-                    <div class="pcard" data-title="Microsoft 365" data-price="35000"
-                        data-desc="Word, Excel, PowerPoint, 1TB OneDrive. Bisa dipakai di 5 perangkat sekaligus."
-                        data-dur="1 Tahun">
-                        <div class="p-ico"
-                            style="background:linear-gradient(135deg,#0078d4,#005a9e);border-color:#005a9e">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#0078d4" /><text x="24" y="33"
-                                    text-anchor="middle" font-size="14" font-weight="800" fill="white"
-                                    font-family="Arial">365</text>
-                            </svg>
-                        </div>
-                        <div class="p-name">Microsoft 365</div>
-                        <div class="p-dur">1 Tahun</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.8</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 35.000</div>
-                            <div class="p-sold">12K terjual</div>
-                        </div>
-                    </div>
-                    <!-- Disney+ -->
-                    <div class="pcard" data-title="Disney+ Hotstar" data-price="14900"
-                        data-desc="Film Disney, Marvel, Star Wars, National Geographic. Streaming kualitas Full HD."
-                        data-dur="1 Bulan">
-                        <div class="p-ico"
-                            style="background:linear-gradient(135deg,#002f6c,#0050b3);border-color:#0050b3">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#002f6c" /><text x="24" y="33"
-                                    text-anchor="middle" font-size="17" font-weight="900" fill="white"
-                                    font-family="Arial">D+</text>
-                            </svg>
-                        </div>
-                        <div class="p-name">Disney+ Hotstar</div>
-                        <div class="p-dur">1 Bulan</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.7</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 14.900</div>
-                            <div class="p-sold">7K terjual</div>
-                        </div>
-                    </div>
-                    <!-- Grammarly -->
-                    <div class="pcard" data-title="Grammarly Premium" data-price="25000"
-                        data-desc="Koreksi grammar otomatis + saran penulisan AI. Wajib buat yang sering nulis Bahasa Inggris."
-                        data-dur="1 Bulan">
-                        <div class="p-ico" style="background:#15c39a;border-color:#12a885">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#15c39a" /><text x="24" y="33"
-                                    text-anchor="middle" font-size="22" font-weight="800" fill="white"
-                                    font-family="Arial">G</text>
-                            </svg>
-                        </div>
-                        <div class="p-name">Grammarly Premium</div>
-                        <div class="p-dur">1 Bulan</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.7</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 25.000</div>
-                            <div class="p-sold">3K terjual</div>
-                        </div>
-                    </div>
-                    <!-- Zoom -->
-                    <div class="pcard" data-title="Zoom Pro" data-price="15000"
-                        data-desc="Meeting online tanpa batas waktu, rekam meeting, 100 peserta. Cocok buat bisnis & edukasi."
-                        data-dur="1 Bulan">
-                        <div class="p-ico" style="background:#2d8cff;border-color:#1a7ae0">
-                            <svg viewBox="0 0 48 48" fill="none">
-                                <rect width="48" height="48" rx="10" fill="#2d8cff" /><text x="24" y="33"
-                                    text-anchor="middle" font-size="18" font-weight="800" fill="white"
-                                    font-family="Arial">Z</text>
-                            </svg>
-                        </div>
-                        <div class="p-name">Zoom Pro</div>
-                        <div class="p-dur">1 Bulan</div>
-                        <div class="p-rating"><svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg> 4.7</div>
-                        <div class="p-bottom">
-                            <div class="p-price">Rp 15.000</div>
-                            <div class="p-sold">4K terjual</div>
-                        </div>
-                    </div>
+                    @empty
+                        <p style="color: #999; text-align: center; width: 100%; padding: 20px;">Belum ada produk.</p>
+                    @endforelse
                 </div>
             </div>
 
@@ -434,7 +437,7 @@
                     </div>
                     <div>
                         <div class="m-stat-t">Stok</div>
-                        <div class="m-stat-v" style="color:#10b981">Ready</div>
+                        <div class="m-stat-v" id="mStockText" style="color:#10b981">Ready</div>
                     </div>
                 </div>
                 <div class="m-stat">
@@ -533,6 +536,8 @@
             const price = parseInt(card.dataset.price) || 5000;
             const desc = card.dataset.desc || 'Support semua perangkat.';
             const dur = card.dataset.dur || '1 Bulan';
+            const catName = card.dataset.catName || 'PREMIUM APP';
+            const stock = parseInt(card.dataset.stock) || 0;
             const icoHTML = card.querySelector('.p-ico').innerHTML;
             const icoStyle = card.querySelector('.p-ico').getAttribute('style') || '';
 
@@ -540,14 +545,42 @@
             document.getElementById('mPrice').textContent = formatRp(price);
             document.getElementById('mDur').textContent = dur;
             document.getElementById('mDesc').textContent = desc;
-            document.getElementById('mTag').textContent = title.toUpperCase();
+            document.getElementById('mTag').textContent = catName.toUpperCase();
+
+            const stockTextEl = document.getElementById('mStockText');
+            if (stock > 0) {
+                stockTextEl.textContent = stock + ' tersedia';
+                stockTextEl.style.color = '#10b981';
+            } else {
+                stockTextEl.textContent = 'Habis';
+                stockTextEl.style.color = '#ef4444';
+            }
 
             const mIco = document.getElementById('mIco');
             mIco.innerHTML = icoHTML;
             mIco.setAttribute('style', icoStyle);
 
             basePrice = price;
-            qtyInput.value = 1;
+            qtyInput.max = stock;
+            if (stock <= 0) {
+                qtyInput.value = 0;
+                qtyInput.min = 0;
+                qtyMinus.disabled = true;
+                qtyPlus.disabled = true;
+                qtyInput.disabled = true;
+                btnBuy.disabled = true;
+                btnBuy.style.opacity = '0.5';
+                btnBuy.style.pointerEvents = 'none';
+            } else {
+                qtyInput.value = 1;
+                qtyInput.min = 1;
+                qtyMinus.disabled = false;
+                qtyPlus.disabled = false;
+                qtyInput.disabled = false;
+                btnBuy.disabled = false;
+                btnBuy.style.opacity = '1';
+                btnBuy.style.pointerEvents = 'auto';
+            }
             waInput.value = '';
             waInput.classList.remove('inp-error');
             waErr.style.display = 'none';
@@ -579,11 +612,19 @@
         });
         qtyPlus.addEventListener('click', () => {
             let v = parseInt(qtyInput.value) || 1;
-            qtyInput.value = v + 1; updateTotal();
+            let max = parseInt(qtyInput.max) || 0;
+            if (v < max) { qtyInput.value = v + 1; updateTotal(); }
         });
         qtyInput.addEventListener('input', () => {
             let v = parseInt(qtyInput.value);
-            if (v < 1 || isNaN(v)) qtyInput.value = 1;
+            let max = parseInt(qtyInput.max) || 0;
+            if (max <= 0) {
+                qtyInput.value = 0;
+            } else if (v < 1 || isNaN(v)) {
+                qtyInput.value = 1;
+            } else if (v > max) {
+                qtyInput.value = max;
+            }
             updateTotal();
         });
 
@@ -603,6 +644,21 @@
             btn.addEventListener('click', function () {
                 document.querySelectorAll('.cat').forEach(b => b.classList.remove('on'));
                 this.classList.add('on');
+
+                const catId = this.getAttribute('data-cat');
+                const allCards = document.querySelectorAll('.all-pcard');
+
+                allCards.forEach(card => {
+                    if (catId === 'all') {
+                        card.style.display = 'flex';
+                    } else {
+                        if (card.getAttribute('data-cat') === catId) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    }
+                });
             });
         });
         document.querySelectorAll('.fltr').forEach(btn => {
@@ -637,6 +693,87 @@
         // Init tema dari localStorage
         const savedTheme = localStorage.getItem('zann-theme') || 'dark';
         applyTheme(savedTheme);
+
+        // ===== SEARCH LOGIC =====
+        const searchInput = document.getElementById('search-input');
+        const searchOverlay = document.getElementById('searchOverlay');
+        const searchResults = document.getElementById('searchResults');
+        let allProductsData = [];
+
+        // Collect all products from DOM on load (including bestsellers too)
+        document.querySelectorAll('.pcard').forEach(card => {
+            if (!card.dataset.title) return;
+            // avoid duplicates
+            if (allProductsData.find(p => p.title === card.dataset.title)) return;
+            allProductsData.push({
+                title: card.dataset.title,
+                price: card.dataset.price,
+                catName: card.dataset.catName || '',
+                icoHTML: card.querySelector('.p-ico') ? card.querySelector('.p-ico').innerHTML : '',
+                icoStyle: card.querySelector('.p-ico') ? card.querySelector('.p-ico').getAttribute('style') || '' : '',
+                isBestseller: card.dataset.bestseller === 'true',
+                element: card
+            });
+        });
+
+        function openSearchOverlay() {
+            searchOverlay.classList.add('show');
+            searchResults.classList.add('show');
+            renderSearch(searchInput.value);
+        }
+
+        function closeSearchOverlay() {
+            searchOverlay.classList.remove('show');
+            searchResults.classList.remove('show');
+        }
+
+        searchInput.addEventListener('focus', openSearchOverlay);
+        searchInput.addEventListener('click', (e) => e.stopPropagation());
+
+        // Clicking on the overlay (not search-wrap) closes it
+        searchOverlay.addEventListener('click', closeSearchOverlay);
+
+        searchInput.addEventListener('input', (e) => {
+            renderSearch(e.target.value);
+        });
+
+        function renderSearch(query) {
+            query = (query || '').toLowerCase().trim();
+            searchResults.innerHTML = '';
+
+            const filtered = query === ''
+                ? allProductsData.filter(p => p.isBestseller)
+                : allProductsData.filter(p =>
+                    p.title.toLowerCase().includes(query) ||
+                    (p.catName && p.catName.toLowerCase().includes(query))
+                );
+
+            if (filtered.length === 0) {
+                searchResults.innerHTML = '<div class="s-empty">Produk tidak ditemukan 🔍</div>';
+                return;
+            }
+
+            filtered.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 's-item';
+                item.innerHTML = `
+                    <div class="s-ico" style="${p.icoStyle}">${p.icoHTML}</div>
+                    <div class="s-info">
+                        ${p.catName ? `<div class="s-cat">${p.catName}</div>` : ''}
+                        <div class="s-title">${p.title}</div>
+                        <div class="s-price">${formatRp(parseInt(p.price) || 0)}</div>
+                    </div>
+                `;
+                // Use mousedown so click fires before blur
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault(); // prevent input blur
+                    closeSearchOverlay();
+                    searchInput.value = '';
+                    openModal(p.element);
+                });
+                searchResults.appendChild(item);
+            });
+        }
     </script>
 
     <!-- BOTTOM NAV -->
