@@ -527,6 +527,7 @@ html:not(.light) .theme-toggle .icon-moon {
     height: 24px;
     border-radius: 50%;
     color: white;
+    flex-shrink: 0;
 }
 .toast-success .toast-icon { background: #10b981; }
 .toast-error .toast-icon { background: #ef4444; }

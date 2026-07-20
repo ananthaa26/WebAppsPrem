@@ -37,7 +37,14 @@ Route::get('/kebijakan-privasi', function () {
 });
 
 Route::get('/pesanan', function () {
-    return view('pesanan');
+    $invoice = request('invoice');
+    $transaction = null;
+    if ($invoice) {
+        $transaction = \App\Models\Transaction::where('invoice_number', $invoice)
+            ->with(['product', 'variant'])
+            ->first();
+    }
+    return view('pesanan', compact('transaction'));
 });
 
 Route::get('/auth', function () {
@@ -52,7 +59,12 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout']);
 
 Route::get('/akun', function () {
-    return view('akun');
+    if (!auth()->check()) return redirect('/auth');
+    $transactions = \App\Models\Transaction::where('user_id', auth()->id())
+                    ->with(['product', 'variant'])
+                    ->latest()
+                    ->paginate(10);
+    return view('akun', compact('transactions'));
 });
 
 Route::get('/auth/verify-email/send', function () {
@@ -109,6 +121,56 @@ Route::get('/akun/setting', function () {
     return view('setting');
 });
 
+Route::get('/akun/deposit', function () {
+    if (!auth()->check()) return redirect('/auth');
+    return view('deposit');
+});
+
 Route::post('/akun/setting/profile', [AuthController::class, 'updateProfile']);
 Route::post('/akun/setting/password', [AuthController::class, 'updatePassword']);
 Route::delete('/akun/setting/delete', [AuthController::class, 'deleteAccount']);
+
+Route::post('/checkout', [\App\Http\Controllers\CheckoutController::class, 'process'])->middleware('auth');
+
+Route::get('/api/pesanan/stream', function (\Illuminate\Http\Request $request) {
+    $invoice = $request->query('invoice');
+    
+    $response = new \Symfony\Component\HttpFoundation\StreamedResponse(function() use ($invoice) {
+        $lastStatus = null;
+        
+        while (true) {
+            $transaction = \App\Models\Transaction::where('invoice_number', $invoice)->first();
+            
+            if ($transaction && $lastStatus !== $transaction->status) {
+                $lastStatus = $transaction->status;
+                $data = [
+                    'status' => $transaction->status,
+                    'detail' => $transaction->description_detail ?? ''
+                ];
+                echo "data: " . json_encode($data) . "\n\n";
+                if (ob_get_level() > 0) ob_flush();
+                flush();
+                
+                // If it reached a final state, we can break to close connection
+                if (in_array($transaction->status, ['completed', 'failed'])) {
+                    break;
+                }
+            }
+            
+            if (connection_aborted()) {
+                break;
+            }
+            
+            sleep(2);
+        }
+    });
+
+    $response->headers->set('Content-Type', 'text/event-stream');
+    $response->headers->set('Cache-Control', 'no-cache');
+    $response->headers->set('Connection', 'keep-alive');
+    $response->headers->set('X-Accel-Buffering', 'no');
+
+    return $response;
+});
+
+Route::post('/api/telegram/webhook', [\App\Http\Controllers\TelegramController::class, 'webhook']);

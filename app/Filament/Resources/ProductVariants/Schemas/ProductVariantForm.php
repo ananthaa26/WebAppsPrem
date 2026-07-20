@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProductVariants\Schemas;
 
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
@@ -12,7 +13,7 @@ class ProductVariantForm
     {
         return $schema
             ->components([
-                \Filament\Forms\Components\Select::make('product_id')
+                Select::make('product_id')
                     ->relationship('product', 'name')
                     ->required(),
                 TextInput::make('label')
@@ -23,10 +24,11 @@ class ProductVariantForm
                 TextInput::make('price')
                     ->required()
                     ->numeric()
-                    ->prefix('Rp'),
+                    ->prefix('$'),
                 TextInput::make('original_price')
                     ->numeric()
-                    ->prefix('Rp'),
+                    ->default(null)
+                    ->prefix('$'),
                 TextInput::make('stock')
                     ->required()
                     ->numeric()

@@ -11,7 +11,11 @@
         </a>
         @auth
         <a href="/akun" class="bn {{ request()->is('akun') || request()->is('auth') ? 'on' : '' }}">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            @if(auth()->user()->avatar)
+                <img src="{{ auth()->user()->avatar }}" alt="Profile" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; margin-bottom: 2px;">
+            @else
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-bottom: 2px;">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
+            @endif
             Akun
         </a>
         @else

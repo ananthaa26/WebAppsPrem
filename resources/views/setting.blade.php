@@ -214,6 +214,18 @@
             font-weight: 600;
             cursor: pointer;
         }
+        .inp-error {
+            border-color: #ff416c !important;
+            box-shadow: 0 0 0 3px rgba(255, 65, 108, 0.2) !important;
+        }
+        .shake {
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
     </style>
 </head>
 <body>
@@ -247,20 +259,20 @@
                     </form>
 
                     <!-- Form Password -->
-                    <form action="/akun/setting/password" method="POST">
+                    <form action="/akun/setting/password" method="POST" id="passwordForm">
                         @csrf
                         <div style="font-weight: 700; color: var(--text-main); margin-bottom: 16px; font-size: 16px; padding-top: 20px; border-top: 1px solid var(--border-color);">Ubah Kata Sandi</div>
                         <div class="form-group">
                             <label class="form-label">Kata Sandi Saat Ini</label>
-                            <input type="password" name="current_password" class="form-control" placeholder="Kosongkan jika tidak ingin mengubah sandi">
+                            <input type="password" name="current_password" id="current_password" class="form-control" placeholder="Kata sandi saat ini">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Kata Sandi Baru</label>
-                            <input type="password" name="new_password" class="form-control" placeholder="Minimal 6 karakter">
+                            <input type="password" name="new_password" id="new_password" class="form-control" placeholder="Minimal 6 karakter">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Konfirmasi Sandi Baru</label>
-                            <input type="password" name="new_password_confirmation" class="form-control" placeholder="Ulangi sandi baru">
+                            <input type="password" name="new_password_confirmation" id="new_password_confirmation" class="form-control" placeholder="Ulangi sandi baru">
                         </div>
                         <button type="submit" class="btn-save" style="background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--border-color);">Perbarui Sandi</button>
                     </form>
@@ -333,6 +345,56 @@
             var modal = document.getElementById('deleteModal');
             modal.classList.remove('show');
             setTimeout(function() { modal.style.display = 'none'; }, 300);
+        }
+
+        // Password Form JS Validation
+        var passwordForm = document.getElementById('passwordForm');
+        if (passwordForm) {
+            passwordForm.addEventListener('submit', function(e) {
+                var currentPw = document.getElementById('current_password');
+                var newPw = document.getElementById('new_password');
+                var confirmPw = document.getElementById('new_password_confirmation');
+                var hasError = false;
+
+                // Reset error state
+                [currentPw, newPw, confirmPw].forEach(function(inp) {
+                    inp.classList.remove('inp-error');
+                });
+
+                // Validation: If they try to submit, all fields are required
+                if (!currentPw.value.trim()) {
+                    currentPw.classList.add('inp-error');
+                    hasError = true;
+                }
+                if (!newPw.value.trim()) {
+                    newPw.classList.add('inp-error');
+                    hasError = true;
+                }
+                if (!confirmPw.value.trim()) {
+                    confirmPw.classList.add('inp-error');
+                    hasError = true;
+                }
+
+                // Match validation
+                if (newPw.value.trim() && confirmPw.value.trim() && newPw.value !== confirmPw.value) {
+                    newPw.classList.add('inp-error');
+                    confirmPw.classList.add('inp-error');
+                    hasError = true;
+                }
+
+                if (hasError) {
+                    e.preventDefault();
+                    passwordForm.classList.add('shake');
+                    setTimeout(function() { passwordForm.classList.remove('shake'); }, 400);
+                }
+            });
+
+            // Clear errors on input
+            ['current_password', 'new_password', 'new_password_confirmation'].forEach(function(id) {
+                document.getElementById(id).addEventListener('input', function() {
+                    this.classList.remove('inp-error');
+                });
+            });
         }
     </script>
 </body>

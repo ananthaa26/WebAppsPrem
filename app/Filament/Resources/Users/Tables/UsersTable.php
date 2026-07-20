@@ -1,40 +1,30 @@
 <?php
 
-namespace App\Filament\Resources\ProductVariants\Tables;
+namespace App\Filament\Resources\Users\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class ProductVariantsTable
+class UsersTable
 {
     public static function configure(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('product.name')
-                    ->label('Produk')
-                    ->sortable(),
-                TextColumn::make('label')
+                TextColumn::make('name')
                     ->searchable(),
-                TextColumn::make('duration_days')
-                    ->numeric()
+                TextColumn::make('email')
+                    ->label('Email address')
+                    ->searchable(),
+                TextColumn::make('email_verified_at')
+                    ->dateTime()
                     ->sortable(),
-                TextColumn::make('price')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('original_price')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('stock')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('is_active')
-                    ->boolean(),
-                TextColumn::make('sort_order')
+                TextColumn::make('balance')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('created_at')
@@ -51,6 +41,21 @@ class ProductVariantsTable
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('tambah_saldo')
+                    ->label('Tambah Saldo')
+                    ->icon('heroicon-o-currency-dollar')
+                    ->form([
+                        TextInput::make('amount')
+                            ->label('Jumlah Saldo')
+                            ->numeric()
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data): void {
+                        $record->update([
+                            'balance' => $record->balance + $data['amount'],
+                        ]);
+                    })
+                    ->color('success'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

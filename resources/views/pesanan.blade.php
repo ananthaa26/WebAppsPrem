@@ -56,44 +56,83 @@
                 </div>
 
                 @if(request('invoice'))
-                    <!-- Hasil Riwayat Transaksi (Statik / UI Only) -->
-                    <div class="pcard" style="margin-bottom: 24px; cursor: default;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
-                            <div>
-                                <div style="font-size: 12px; color: var(--t2); margin-bottom: 4px;">No. Invoice</div>
-                                <div style="font-weight: 700; font-size: 14px; color: var(--t1);">{{ strtoupper(request('invoice')) }}</div>
+                    @if($transaction)
+                        <!-- Hasil Riwayat Transaksi -->
+                        <div class="pcard" style="margin-bottom: 24px; cursor: default;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
+                                <div>
+                                    <div style="font-size: 12px; color: var(--t2); margin-bottom: 4px;">No. Invoice</div>
+                                    <div style="font-weight: 700; font-size: 14px; color: var(--t1);">{{ $transaction->invoice_number }}</div>
+                                </div>
+                                <div id="statusBadgeWrapper">
+                                @if($transaction->status === 'completed')
+                                    <div style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                        Selesai
+                                    </div>
+                                @elseif($transaction->status === 'processing')
+                                    <div style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                        Diproses
+                                    </div>
+                                @elseif($transaction->status === 'failed')
+                                    <div style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                        Gagal
+                                    </div>
+                                @else
+                                    <div style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                        Menunggu
+                                    </div>
+                                @endif
+                                </div>
                             </div>
-                            <div style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
-                                Sukses
+                            
+                            <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+                                <div style="width: 48px; height: 48px; background: var(--bg); border-radius: var(--r1); display: flex; align-items: center; justify-content: center; font-size: 24px; overflow: hidden;">
+                                    @if($transaction->product->image)
+                                        <img src="{{ asset('storage/' . $transaction->product->image) }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                                    @else
+                                        🛒
+                                    @endif
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--t1); margin-bottom: 4px;">{{ $transaction->product->name }}</div>
+                                    <div style="font-size: 12px; color: var(--t2);">Varian: {{ $transaction->variant ? $transaction->variant->label : '-' }} ({{ $transaction->variant ? $transaction->variant->duration_days : 0 }} Hari)</div>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
-                            <div style="width: 48px; height: 48px; background: var(--bg); border-radius: var(--r1); display: flex; align-items: center; justify-content: center; font-size: 24px;">
-                                🎬
-                            </div>
-                            <div>
-                                <div style="font-weight: 600; color: var(--t1); margin-bottom: 4px;">Netflix Premium</div>
-                                <div style="font-size: 12px; color: var(--t2);">Varian: 1 Bulan (Sharing)</div>
-                            </div>
-                        </div>
 
-                        <div style="background: var(--bg); padding: 16px; border-radius: var(--r1);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <div style="font-size: 12px; color: var(--t2);">Detail Akun:</div>
-                                <button onclick="copyAccountDetail()" style="background: var(--card); border: 1px solid var(--border); padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--t1); cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
-                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                    </svg>
-                                    <span id="copyBtnText">Salin</span>
-                                </button>
+                            <div id="statusDetailWrapper">
+                            @if($transaction->status === 'completed' && $transaction->description_detail)
+                                <div style="background: var(--bg); padding: 16px; border-radius: var(--r1);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <div style="font-size: 12px; color: var(--t2);">Detail Akun / Pesanan:</div>
+                                        <button onclick="copyAccountDetail()" style="background: var(--card); border: 1px solid var(--border); padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--t1); cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                            <span id="copyBtnText">Salin</span>
+                                        </button>
+                                    </div>
+                                    <div id="accountDetailText" style="font-family: monospace; font-size: 14px; color: var(--t1); line-height: 1.6; background: var(--card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); white-space: pre-wrap;">{{ $transaction->description_detail }}</div>
+                                </div>
+                            @elseif($transaction->status === 'failed')
+                                <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 16px; border-radius: var(--r1); text-align: center; color: #ef4444; font-size: 13px;">
+                                    ❌ Transaksi dibatalkan atau gagal diproses. Silakan hubungi admin.
+                                </div>
+                            @else
+                                <div style="background: var(--bg); padding: 16px; border-radius: var(--r1); text-align: center; color: var(--t2); font-size: 13px;">
+                                    ⏳ Pesanan Anda sedang diproses oleh admin. Rincian akun akan muncul di sini jika status sudah selesai.
+                                </div>
+                            @endif
                             </div>
-                            <div id="accountDetailText" style="font-family: monospace; font-size: 14px; color: var(--t1); line-height: 1.6; background: var(--card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); white-space: pre-wrap;">Email : netflix_pro@zannstore.com
-Pass  : zannstore123
-Profil: User 1</div>
                         </div>
-                    </div>
+                    @else
+                        <!-- State error jika invoice salah -->
+                        <div style="text-align: center; padding: 40px 20px; background: var(--card); border-radius: var(--r2); border: 1px solid var(--border);">
+                            <div style="font-size: 40px; margin-bottom: 16px;">❌</div>
+                            <div style="font-weight: 600; color: var(--t1); margin-bottom: 8px;">Transaksi Tidak Ditemukan</div>
+                            <div style="font-size: 13px; color: var(--t2);">Invoice <b>{{ request('invoice') }}</b> tidak ditemukan. Silahkan diperiksa kembali nomor invoice anda</div>
+                        </div>
+                    @endif
                 @else
                     <!-- State Kosong jika belum input -->
                     <div style="text-align: center; padding: 40px 20px; background: var(--card); border-radius: var(--r2); border: 1px solid var(--border);">
@@ -158,6 +197,65 @@ Profil: User 1</div>
                 showToast('Gagal menyalin detail akun', 'error');
             });
         }
+
+        @if(request('invoice') && isset($transaction) && in_array($transaction->status, ['pending', 'processing']))
+        // Auto Update with Server-Sent Events (SSE)
+        (function() {
+            const invoice = '{{ $transaction->invoice_number }}';
+            const sse = new EventSource('/api/pesanan/stream?invoice=' + invoice);
+            
+            sse.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                // Update Status Badge
+                const badgeWrapper = document.getElementById('statusBadgeWrapper');
+                if (badgeWrapper) {
+                    if (data.status === 'completed') {
+                        badgeWrapper.innerHTML = '<div style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Selesai</div>';
+                    } else if (data.status === 'processing') {
+                        badgeWrapper.innerHTML = '<div style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Diproses</div>';
+                    } else if (data.status === 'failed') {
+                        badgeWrapper.innerHTML = '<div style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Gagal</div>';
+                    }
+                }
+                
+                // Update Detail
+                const detailWrapper = document.getElementById('statusDetailWrapper');
+                if (detailWrapper && data.status === 'completed' && data.detail) {
+                    detailWrapper.innerHTML = `
+                        <div style="background: var(--bg); padding: 16px; border-radius: var(--r1);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="font-size: 12px; color: var(--t2);">Detail Akun / Pesanan:</div>
+                                <button onclick="copyAccountDetail()" style="background: var(--card); border: 1px solid var(--border); padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--t1); cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span id="copyBtnText">Salin</span>
+                                </button>
+                            </div>
+                            <div id="accountDetailText" style="font-family: monospace; font-size: 14px; color: var(--t1); line-height: 1.6; background: var(--card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); white-space: pre-wrap;">${data.detail.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+                        </div>
+                    `;
+                    showToast('Pesanan selesai! Akun telah dikirim.', 'success');
+                    sse.close();
+                } else if (detailWrapper && data.status === 'failed') {
+                    detailWrapper.innerHTML = `
+                        <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 16px; border-radius: var(--r1); text-align: center; color: #ef4444; font-size: 13px;">
+                            ❌ Transaksi dibatalkan atau gagal diproses. Silakan hubungi admin.
+                        </div>
+                    `;
+                    showToast('Pesanan gagal.', 'error');
+                    sse.close();
+                }
+            };
+
+            sse.onerror = function() {
+                // Ignore silent reconnects, SSE handles it natively
+                // sse.close(); can be called if we want to stop
+            };
+        })();
+        @endif
     </script>
     
     <!-- BOTTOM NAV -->

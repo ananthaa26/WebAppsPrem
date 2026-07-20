@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Products\Schemas;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
@@ -14,7 +15,7 @@ class ProductForm
     {
         return $schema
             ->components([
-                \Filament\Forms\Components\Select::make('category_id')
+                Select::make('category_id')
                     ->relationship('category', 'name')
                     ->required(),
                 TextInput::make('name')
@@ -22,9 +23,9 @@ class ProductForm
                 TextInput::make('slug')
                     ->required(),
                 FileUpload::make('image')
-                    ->image()
-                    ->disk('public'),
+                    ->image(),
                 Textarea::make('description')
+                    ->default(null)
                     ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->required(),

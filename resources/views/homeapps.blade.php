@@ -7,6 +7,7 @@
     <title>ZANNSTORE — Langganan Premium Murah</title>
     <meta name="description"
         content="Beli langganan premium murah, aman, proses otomatis. Spotify, Netflix, Canva, CapCut dan lainnya.">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
@@ -24,6 +25,10 @@
     </script>
     <style>
         /* SEARCH OVERLAY & RESULTS */
+        html {
+            scroll-behavior: smooth;
+        }
+
         .search-overlay {
             position: fixed;
             top: 0;
@@ -211,7 +216,7 @@
                             alt="Best Seller" class="sec-icon">
                         Best Seller
                     </div>
-                    <a href="#" class="sec-more">Lihat Semua →</a>
+                    <a href="#semua_product" class="sec-more">Lihat Semua →</a>
                 </div>
                 <div class="pgrid">
                     @forelse($bestsellers as $index => $product)
@@ -233,6 +238,7 @@
                             }
                         @endphp
                         <div class="pcard" data-title="{{ $product->name }}" data-price="{{ $price }}"
+                            data-product-id="{{ $product->id }}" data-variant-id="{{ $firstVariant ? $firstVariant->id : '' }}"
                             data-desc="{{ $product->description }}" data-dur="{{ $duration }}"
                             data-cat-name="{{ $product->category->name ?? 'PREMIUM APP' }}" data-bestseller="true"
                             data-stock="{{ $stock }}">
@@ -321,7 +327,7 @@
             </div>
 
             <!-- ALL PRODUCTS -->
-            <div class="sec">
+            <div class="sec" id="semua_product">
                 <div class="sec-head">
                     <div class="sec-t">Semua Produk</div>
                 </div>
@@ -360,6 +366,7 @@
                         @endphp
                         <div class="pcard all-pcard" data-cat="{{ $product->category_id }}"
                             data-title="{{ $product->name }}" data-price="{{ $price }}"
+                            data-product-id="{{ $product->id }}" data-variant-id="{{ $firstVariant ? $firstVariant->id : '' }}"
                             data-desc="{{ $product->description }}" data-dur="{{ $duration }}"
                             data-cat-name="{{ $product->category->name ?? 'PREMIUM APP' }}"
                             data-bestseller="{{ $product->is_bestseller ? 'true' : 'false' }}" data-stock="{{ $stock }}">
@@ -516,6 +523,8 @@
         const btnBuy = document.getElementById('btnBuy');
 
         let basePrice = 5000;
+        let selectedProductId = null;
+        let selectedVariantId = null;
 
         function formatRp(num) {
             return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -532,6 +541,8 @@
         }
 
         function openModal(card) {
+            selectedProductId = card.dataset.productId;
+            selectedVariantId = card.dataset.variantId;
             const title = card.dataset.title || card.querySelector('.p-name').textContent;
             const price = parseInt(card.dataset.price) || 5000;
             const desc = card.dataset.desc || 'Support semua perangkat.';
@@ -629,6 +640,12 @@
         });
 
         btnBuy.addEventListener('click', () => {
+            const isAuth = {{ auth()->check() ? 'true' : 'false' }};
+            if (!isAuth) {
+                window.location.href = '/auth';
+                return;
+            }
+
             if (!waInput.value.trim()) {
                 waInput.classList.add('inp-error', 'shake');
                 waErr.style.display = 'block';
@@ -636,7 +653,53 @@
                 waInput.focus();
                 return;
             }
-            alert('✅ Pesanan diterima! Kami akan segera proses.');
+            
+            btnBuy.disabled = true;
+            btnBuy.innerHTML = 'Memproses...';
+
+            fetch('/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    product_id: selectedProductId,
+                    variant_id: selectedVariantId,
+                    quantity: parseInt(qtyInput.value) || 1,
+                    customer_contact: waInput.value.trim()
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Close product modal
+                    closeModal();
+                    
+                    // Show success toast
+                    showToast('Pembelian Berhasil! Mengarahkan ke detail pesanan...', 'success');
+
+                    setTimeout(() => {
+                        window.location.href = '/pesanan?invoice=' + data.invoice;
+                    }, 3000);
+                } else if (data.message === 'Unauthenticated.') {
+                    showToast('Silakan login terlebih dahulu untuk membeli produk.', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/auth';
+                    }, 2000);
+                } else {
+                    showToast(data.message || 'Terjadi kesalahan.', 'error');
+                    btnBuy.disabled = false;
+                    btnBuy.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg> Bayar Sekarang';
+                }
+            })
+            .catch(err => {
+                showToast('Terjadi kesalahan pada server. Coba lagi nanti.', 'error');
+                console.error(err);
+                btnBuy.disabled = false;
+                btnBuy.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg> Bayar Sekarang';
+            });
         });
 
         // Category filter tabs
@@ -777,6 +840,7 @@
     </script>
 
     <!-- BOTTOM NAV -->
+    @include('components.alert')
     @include('components.bottom-nav')
 </body>
 
