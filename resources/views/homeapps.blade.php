@@ -13,6 +13,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        .modal-overlay {
+            z-index: 9999 !important;
+        }
+        .modal-box {
+            z-index: 10000 !important;
+        }
+        @media (max-width: 768px) {
+            .modal-box {
+                max-height: 75vh !important;
+            }
+            .m-scroll {
+                padding-bottom: 50px !important;
+            }
+        }
+    </style>
     <!-- Anti-FOUC: terapkan tema sebelum render -->
     <script>
         (function () {
@@ -264,7 +280,7 @@
                             <div class="p-rating"><svg viewBox="0 0 24 24">
                                     <path
                                         d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                </svg> 4.9</div>
+                                </svg> {{ number_format($product->average_rating, 1) }}</div>
                             <div class="p-bottom">
                                 <div class="p-price">Rp {{ number_format($price, 0, ',', '.') }}</div>
                                 <div class="p-sold">
@@ -391,7 +407,7 @@
                             <div class="p-rating"><svg viewBox="0 0 24 24">
                                     <path
                                         d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                </svg> 4.8</div>
+                                </svg> {{ number_format($product->average_rating, 1) }}</div>
                             <div class="p-bottom">
                                 <div class="p-price">Rp {{ number_format($price, 0, ',', '.') }}</div>
                                 <div class="p-sold">
@@ -478,8 +494,17 @@
                     </div>
                 </div>
 
-                <div class="m-buy-t" style="margin-top:20px">Kirim ke WhatsApp / Telegram</div>
-                <div class="m-buy-s">Akun premium akan dikirim ke nomor ini</div>
+                <div class="m-buy-t" style="margin-top:20px">Tujuan Pengiriman</div>
+                <div style="display: flex; gap: 10px; margin-top: 5px; margin-bottom: 10px;">
+                    <label style="flex: 1; border: 2px solid #ff416c; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; display: flex; justify-content: center; align-items: center; background: rgba(255, 65, 108, 0.1);" class="contact-opt">
+                        <input type="radio" name="contact_method" value="wa" checked style="display: none;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width: 28px; height: 28px; object-fit: contain;">
+                    </label>
+                    <label style="flex: 1; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; display: flex; justify-content: center; align-items: center; background: transparent;" class="contact-opt">
+                        <input type="radio" name="contact_method" value="email" style="display: none;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" alt="Email" style="width: 28px; height: 28px; object-fit: contain;">
+                    </label>
+                </div>
                 <div class="m-inp-wrap">
                     <div class="m-inp-ico">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -487,10 +512,34 @@
                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                     </div>
-                    <input type="text" class="m-inp" id="waInput" placeholder="Contoh: 08123456789"
+                    <input type="number" class="m-inp" id="waInput" placeholder="Contoh: 08123456789"
                         oninput="clearError(this)">
                 </div>
-                <div class="m-err" id="waErr">⚠️ Nomor WA / username Telegram wajib diisi dulu ya!</div>
+                <div class="m-err" id="waErr">⚠️ Nomor WA / Email wajib diisi dulu ya!</div>
+                
+                <div class="m-buy-t" style="margin-top:20px">Metode Pembayaran</div>
+                <div class="m-buy-s">Pilih cara kamu membayar pesanan ini</div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;" id="pmContainer">
+                    <label style="flex: 1; border: 2px solid #ff416c; padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; background: rgba(255, 65, 108, 0.1);" class="pm-opt">
+                        <input type="radio" name="payment_method" value="qris" checked style="display: none;">
+                        <div style="background: #ffffff; padding: 3px 6px; border-radius: 6px; display: flex; justify-content: center; align-items: center;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" alt="QRIS" style="width: 54px; height: 22px; object-fit: contain;">
+                        </div>
+                        <span style="font-size: 13px; font-weight: 600; color: var(--text-main);">QRIS (Semua E-Wallet)</span>
+                    </label>
+                    <label style="flex: 1; border: 1px solid var(--border-color); padding: 12px; border-radius: 12px; text-align: center; cursor: {{ auth()->check() ? 'pointer' : 'not-allowed' }}; opacity: {{ auth()->check() ? '1' : '0.5' }}; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px;" class="pm-opt" {{ !auth()->check() ? 'onclick="event.preventDefault(); showToast(\'Silakan login terlebih dahulu untuk menggunakan Saldo Akun.\', \'error\');"' : '' }}>
+                        <input type="radio" name="payment_method" value="saldo" style="display: none;" {{ auth()->check() ? '' : 'disabled' }}>
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/>
+                            <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/>
+                            <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"/>
+                        </svg>
+                        <span style="font-size: 13px; font-weight: 600; color: var(--text-main);">Saldo Akun</span>
+                        @if(!auth()->check())
+                        <span style="font-size: 10px; color: #ef4444;">(Wajib Login)</span>
+                        @endif
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -538,6 +587,11 @@
         function clearError(el) {
             el.classList.remove('inp-error');
             waErr.style.display = 'none';
+            
+            const contactMethod = document.querySelector('input[name="contact_method"]:checked').value;
+            if (contactMethod === 'wa') {
+                el.value = el.value.replace(/[^0-9]/g, '');
+            }
         }
 
         function openModal(card) {
@@ -639,10 +693,53 @@
             updateTotal();
         });
 
+        // Payment Method styling
+        document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('.pm-opt').forEach(opt => {
+                    opt.style.border = '1px solid var(--border-color)';
+                    opt.style.background = 'transparent';
+                });
+                if (this.checked) {
+                    this.parentElement.style.border = '2px solid #ff416c';
+                    this.parentElement.style.background = 'rgba(255, 65, 108, 0.1)';
+                }
+            });
+        });
+
+        // Contact Method styling & placeholder
+        document.querySelectorAll('input[name="contact_method"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('.contact-opt').forEach(opt => {
+                    opt.style.border = '1px solid var(--border-color)';
+                    opt.style.background = 'transparent';
+                });
+                if (this.checked) {
+                    this.parentElement.style.border = '2px solid #ff416c';
+                    this.parentElement.style.background = 'rgba(255, 65, 108, 0.1)';
+                    
+                    if (this.value === 'wa') {
+                        waInput.type = 'number';
+                        waInput.placeholder = 'Contoh: 08123456789';
+                        waErr.innerText = '⚠️ Nomor WA wajib diisi dulu ya!';
+                    } else {
+                        waInput.type = 'email';
+                        waInput.placeholder = 'Contoh: email@domain.com';
+                        waErr.innerText = '⚠️ Email wajib diisi dulu ya!';
+                    }
+                }
+            });
+        });
+
         btnBuy.addEventListener('click', () => {
             const isAuth = {{ auth()->check() ? 'true' : 'false' }};
-            if (!isAuth) {
-                window.location.href = '/auth';
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+            
+            if (paymentMethod === 'saldo' && !isAuth) {
+                showToast('Silakan login terlebih dahulu untuk menggunakan Saldo.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/auth';
+                }, 2000);
                 return;
             }
 
@@ -668,7 +765,8 @@
                     product_id: selectedProductId,
                     variant_id: selectedVariantId,
                     quantity: parseInt(qtyInput.value) || 1,
-                    customer_contact: waInput.value.trim()
+                    customer_contact: waInput.value.trim(),
+                    payment_method: paymentMethod
                 })
             })
             .then(res => res.json())
@@ -677,12 +775,17 @@
                     // Close product modal
                     closeModal();
                     
-                    // Show success toast
-                    showToast('Pembelian Berhasil! Mengarahkan ke detail pesanan...', 'success');
-
-                    setTimeout(() => {
-                        window.location.href = '/pesanan?invoice=' + data.invoice;
-                    }, 3000);
+                    if (paymentMethod === 'qris' && data.checkout_url) {
+                        showToast('Memproses ke pembayaran QRIS...', 'success');
+                        setTimeout(() => {
+                            window.location.href = data.checkout_url;
+                        }, 2000);
+                    } else {
+                        showToast('Pembelian Berhasil! Mengarahkan ke detail pesanan...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/pesanan?invoice=' + data.invoice;
+                        }, 3000);
+                    }
                 } else if (data.message === 'Unauthenticated.') {
                     showToast('Silakan login terlebih dahulu untuk membeli produk.', 'error');
                     setTimeout(() => {

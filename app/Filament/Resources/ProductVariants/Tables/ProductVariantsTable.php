@@ -24,10 +24,10 @@ class ProductVariantsTable
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('price')
-                    ->money()
+                    ->formatStateUsing(fn ($state) => $state !== null ? 'Rp ' . number_format($state, 0, ',', '.') : '-')
                     ->sortable(),
                 TextColumn::make('original_price')
-                    ->money()
+                    ->formatStateUsing(fn ($state) => $state !== null ? 'Rp ' . number_format($state, 0, ',', '.') : '-')
                     ->sortable(),
                 TextColumn::make('stock')
                     ->numeric()

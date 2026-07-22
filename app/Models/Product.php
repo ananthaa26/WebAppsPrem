@@ -31,4 +31,15 @@ class Product extends Model
     {
         return $this->hasMany(ProductVariant::class, 'product_id');
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'product_id');
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        $avg = $this->transactions()->whereNotNull('rating')->avg('rating');
+        return $avg ? (float) $avg : 5.0;
+    }
 }

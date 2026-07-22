@@ -94,10 +94,17 @@ class TelegramController extends Controller
             return;
         }
 
+        $productName = $transaction->product ? $transaction->product->name : 'Lainnya / Deposit';
+        $variantName = $transaction->variant ? $transaction->variant->label : '-';
+        
         $text = "🛒 *TRANSAKSI BARU*\n\n";
         $text .= "Invoice: `{$transaction->invoice_number}`\n";
-        $text .= "Customer: {$transaction->customer_contact}\n";
+        $text .= "Produk: {$productName}\n";
+        $text .= "Varian: {$variantName}\n";
+        $text .= "Qty: {$transaction->quantity}\n";
+        $text .= "Kontak: {$transaction->customer_contact}\n";
         $text .= "Total: Rp " . number_format($transaction->total_price, 0, ',', '.') . "\n";
+        $text .= "Metode: *" . strtoupper($transaction->payment_method) . "*\n";
         $text .= "Status: *Pending*\n";
 
         $keyboard = [

@@ -16,25 +16,31 @@ class TransactionsTable
             ->columns([
                 TextColumn::make('invoice_number')
                     ->searchable(),
-                TextColumn::make('user_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('product_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('variant_id')
-                    ->numeric()
-                    ->sortable(),
+                TextColumn::make('user.name')
+                    ->label('Pengguna')
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('Guest (Tanpa Akun)'),
+                TextColumn::make('product.name')
+                    ->label('Produk')
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('Deposit Saldo'),
+                TextColumn::make('variant.label')
+                    ->label('Varian')
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('-'),
                 TextColumn::make('customer_contact')
                     ->searchable(),
                 TextColumn::make('quantity')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('price_per_item')
-                    ->numeric()
+                    ->formatStateUsing(fn ($state) => $state !== null ? 'Rp ' . number_format($state, 0, ',', '.') : '-')
                     ->sortable(),
                 TextColumn::make('total_price')
-                    ->money()
+                    ->formatStateUsing(fn ($state) => $state !== null ? 'Rp ' . number_format($state, 0, ',', '.') : '-')
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge(),
@@ -69,6 +75,7 @@ class TransactionsTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 }

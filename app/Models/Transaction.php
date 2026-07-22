@@ -25,6 +25,7 @@ class Transaction extends Model
         'telegram_message_id',
         'paid_at',
         'completed_at',
+        'rating',
     ];
 
     protected $casts = [

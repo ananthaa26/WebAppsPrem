@@ -44,7 +44,7 @@
                 <!-- Form Search Invoice -->
                 <div style="margin-bottom: 24px;">
                     <form action="" method="GET" style="display: flex; gap: 12px; flex-direction: column;">
-                        <input type="text" name="invoice" placeholder="Contoh: INV-20260708-001" 
+                        <input type="text" name="invoice" placeholder="Contoh: ZNP-20260708-001" 
                             style="width: 100%; padding: 14px 16px; border-radius: var(--r2); border: 1px solid var(--border); background: var(--bg); color: var(--t1); font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s;"
                             value="{{ request('invoice') }}"
                             required>
@@ -94,7 +94,7 @@
                                     @endif
                                 </div>
                                 <div>
-                                    <div style="font-weight: 600; color: var(--t1); margin-bottom: 4px;">{{ $transaction->product->name }}</div>
+                                    <div style="font-weight: 600; color: var(--t1); margin-bottom: 4px;">{{ $transaction->product->name }} <span style="font-weight: 400; color: var(--t2); font-size: 13px; margin-left: 4px;">(x{{ $transaction->quantity }})</span></div>
                                     <div style="font-size: 12px; color: var(--t2);">Varian: {{ $transaction->variant ? $transaction->variant->label : '-' }} ({{ $transaction->variant ? $transaction->variant->duration_days : 0 }} Hari)</div>
                                 </div>
                             </div>
@@ -114,6 +114,32 @@
                                     </div>
                                     <div id="accountDetailText" style="font-family: monospace; font-size: 14px; color: var(--t1); line-height: 1.6; background: var(--card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); white-space: pre-wrap;">{{ $transaction->description_detail }}</div>
                                 </div>
+                                
+                                @if(is_null($transaction->rating))
+                                    <div id="ratingSection" style="margin-top: 16px; text-align: center; background: var(--bg); padding: 16px; border-radius: var(--r1); border: 1px solid var(--border);">
+                                        <div style="font-size: 13px; color: var(--t2); margin-bottom: 12px;">Beri Penilaian untuk Produk Ini</div>
+                                        <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;" id="starContainer">
+                                            @for($i=1; $i<=5; $i++)
+                                                <svg class="star-icon" data-val="{{ $i }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 32px; height: 32px; color: #ccc; cursor: pointer; transition: all 0.2s;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                                </svg>
+                                            @endfor
+                                        </div>
+                                        <button id="submitRatingBtn" disabled style="padding: 10px 24px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: not-allowed; opacity: 0.5; transition: 0.2s;">Kirim Penilaian</button>
+                                    </div>
+                                @else
+                                    <div style="margin-top: 16px; text-align: center; background: var(--bg); padding: 16px; border-radius: var(--r1); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                        <span style="font-size: 14px; color: var(--t1); font-weight: 500;">Penilaian Anda:</span>
+                                        <div style="display: flex; gap: 4px;">
+                                            @for($i=1; $i<=5; $i++)
+                                                <svg viewBox="0 0 24 24" fill="{{ $i <= $transaction->rating ? '#f59e0b' : 'none' }}" stroke="{{ $i <= $transaction->rating ? '#f59e0b' : '#ccc' }}" stroke-width="2" style="width: 18px; height: 18px;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                                </svg>
+                                            @endfor
+                                        </div>
+                                    </div>
+                                @endif
+
                             @elseif($transaction->status === 'failed')
                                 <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 16px; border-radius: var(--r1); text-align: center; color: #ef4444; font-size: 13px;">
                                     ❌ Transaksi dibatalkan atau gagal diproses. Silakan hubungi admin.
@@ -180,23 +206,102 @@
 
         // ===== COPY ACCOUNT DETAIL =====
         function copyAccountDetail() {
-            const textToCopy = document.getElementById('accountDetailText').innerText;
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                // Ubah sementara teks tombol
-                const btnText = document.getElementById('copyBtnText');
-                const originalText = btnText.innerText;
-                btnText.innerText = 'Tersalin!';
-                setTimeout(() => {
+            var detailText = document.getElementById("accountDetailText").innerText;
+            navigator.clipboard.writeText(detailText).then(function() {
+                var btnText = document.getElementById("copyBtnText");
+                var originalText = btnText.innerText;
+                btnText.innerText = "Tersalin!";
+                setTimeout(function() {
                     btnText.innerText = originalText;
                 }, 2000);
                 
                 // Tampilkan alert
                 showToast('Detail akun berhasil disalin!', 'success');
-            }).catch(err => {
-                console.error('Gagal menyalin teks: ', err);
+            }, function(err) {
+                console.error('Async: Could not copy text: ', err);
                 showToast('Gagal menyalin detail akun', 'error');
             });
         }
+
+        function initRating() {
+            const stars = document.querySelectorAll('.star-icon');
+            let submitBtn = document.getElementById('submitRatingBtn');
+            let selectedRating = 0;
+
+            if (stars.length > 0 && submitBtn) {
+                const newBtn = submitBtn.cloneNode(true);
+                submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+                submitBtn = newBtn;
+
+                stars.forEach(star => {
+                    star.addEventListener('click', () => {
+                        selectedRating = parseInt(star.getAttribute('data-val'));
+                        stars.forEach(s => {
+                            if (parseInt(s.getAttribute('data-val')) <= selectedRating) {
+                                s.style.fill = '#f59e0b';
+                                s.style.color = '#f59e0b';
+                            } else {
+                                s.style.fill = 'none';
+                                s.style.color = '#ccc';
+                            }
+                        });
+                        submitBtn.disabled = false;
+                        submitBtn.style.cursor = 'pointer';
+                        submitBtn.style.opacity = '1';
+                    });
+                });
+
+                submitBtn.addEventListener('click', () => {
+                    if (selectedRating === 0) return;
+                    submitBtn.innerText = 'Mengirim...';
+                    submitBtn.disabled = true;
+
+                    fetch('/pesanan/rate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            @if(isset($transaction))
+                            invoice_number: '{{ $transaction->invoice_number }}',
+                            @else
+                            invoice_number: '',
+                            @endif
+                            rating: selectedRating
+                        })
+                    }).then(res => res.json()).then(data => {
+                        if (data.status === 'success') {
+                            showToast(data.message, 'success');
+                            
+                            const rs = document.getElementById('ratingSection');
+                            if (rs) {
+                                let starsHtml = '';
+                                for(let i=1; i<=5; i++) {
+                                    let fill = i <= selectedRating ? '#f59e0b' : 'none';
+                                    let stroke = i <= selectedRating ? '#f59e0b' : '#ccc';
+                                    starsHtml += `<svg viewBox="0 0 24 24" fill="${fill}" stroke="${stroke}" stroke-width="2" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>`;
+                                }
+                                rs.outerHTML = `
+                                <div style="margin-top: 16px; text-align: center; background: var(--bg); padding: 16px; border-radius: var(--r1); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <span style="font-size: 14px; color: var(--t1); font-weight: 500;">Penilaian Anda:</span>
+                                    <div style="display: flex; gap: 4px;">${starsHtml}</div>
+                                </div>`;
+                            }
+                        } else {
+                            showToast(data.message || 'Terjadi kesalahan.', 'error');
+                            submitBtn.innerText = 'Kirim Penilaian';
+                            submitBtn.disabled = false;
+                        }
+                    }).catch(e => {
+                        showToast('Terjadi kesalahan jaringan.', 'error');
+                        submitBtn.innerText = 'Kirim Penilaian';
+                        submitBtn.disabled = false;
+                    });
+                });
+            }
+        }
+        initRating();
 
         @if(request('invoice') && isset($transaction) && in_array($transaction->status, ['pending', 'processing']))
         // Auto Update with Server-Sent Events (SSE)
@@ -229,14 +334,23 @@
                                 <button onclick="copyAccountDetail()" style="background: var(--card); border: 1px solid var(--border); padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--t1); cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
                                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                     </svg>
                                     <span id="copyBtnText">Salin</span>
                                 </button>
                             </div>
                             <div id="accountDetailText" style="font-family: monospace; font-size: 14px; color: var(--t1); line-height: 1.6; background: var(--card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); white-space: pre-wrap;">${data.detail.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
                         </div>
+                        
+                        <div id="ratingSection" style="margin-top: 16px; text-align: center; background: var(--bg); padding: 16px; border-radius: var(--r1); border: 1px solid var(--border);">
+                            <div style="font-size: 13px; color: var(--t2); margin-bottom: 12px;">Beri Penilaian untuk Produk Ini</div>
+                            <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;" id="starContainer">
+                                ${[1,2,3,4,5].map(i => `<svg class="star-icon" data-val="${i}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 32px; height: 32px; color: #ccc; cursor: pointer; transition: all 0.2s;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>`).join('')}
+                            </div>
+                            <button id="submitRatingBtn" disabled style="padding: 10px 24px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: not-allowed; opacity: 0.5; transition: 0.2s;">Kirim Penilaian</button>
+                        </div>
                     `;
+                    initRating();
                     showToast('Pesanan selesai! Akun telah dikirim.', 'success');
                     sse.close();
                 } else if (detailWrapper && data.status === 'failed') {

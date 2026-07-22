@@ -24,11 +24,11 @@ class ProductVariantForm
                 TextInput::make('price')
                     ->required()
                     ->numeric()
-                    ->prefix('$'),
+                    ->prefix('Rp'),
                 TextInput::make('original_price')
                     ->numeric()
                     ->default(null)
-                    ->prefix('$'),
+                    ->prefix('Rp'),
                 TextInput::make('stock')
                     ->required()
                     ->numeric()

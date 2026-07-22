@@ -335,8 +335,8 @@
                                         @endif
                                     </div>
                                     <div style="flex: 1;">
-                                        <div style="font-weight: 600; color: var(--text-main); font-size: 13px;">{{ $trx->product ? $trx->product->name : 'Produk Dihapus' }}</div>
-                                        <div style="font-size: 12px; color: var(--text-muted);">{{ $trx->created_at->format('d M Y, H:i') }} • Rp {{ number_format($trx->total_price, 0, ',', '.') }}</div>
+                                        <div style="font-weight: 600; color: var(--text-main); font-size: 13px;">{{ $trx->product ? $trx->product->name : 'Produk Dihapus' }} <span style="color: var(--text-muted); font-weight: 400; font-size: 12px; margin-left: 4px;">(x{{ $trx->quantity }})</span></div>
+                                        <div style="font-size: 12px; color: var(--text-muted);"><span class="local-time" data-timestamp="{{ $trx->created_at->timestamp }}">{{ $trx->created_at->format('d M Y, H:i') }} WIB</span> • Rp {{ number_format($trx->total_price, 0, ',', '.') }}</div>
                                     </div>
                                 </div>
                                 <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color); text-align: right;">
@@ -424,6 +424,16 @@
                 setTimeout(function() { self.classList.remove('theme-pulse'); }, 400);
             });
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.local-time').forEach(function(el) {
+                var ts = parseInt(el.getAttribute('data-timestamp')) * 1000;
+                var date = new Date(ts);
+                var options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' };
+                // Format using Indonesian locale
+                el.innerText = date.toLocaleString('id-ID', options).replace(/\./g, ':');
+            });
+        });
     </script>
 </body>
 </html>

@@ -16,14 +16,20 @@ class TransactionForm
             ->components([
                 TextInput::make('invoice_number')
                     ->required(),
-                TextInput::make('user_id')
-                    ->numeric()
+                Select::make('user_id')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload()
                     ->default(null),
-                TextInput::make('product_id')
-                    ->numeric()
+                Select::make('product_id')
+                    ->relationship('product', 'name')
+                    ->searchable()
+                    ->preload()
                     ->default(null),
-                TextInput::make('variant_id')
-                    ->numeric()
+                Select::make('variant_id')
+                    ->relationship('variant', 'label')
+                    ->searchable()
+                    ->preload()
                     ->default(null),
                 TextInput::make('customer_contact')
                     ->required(),
@@ -37,7 +43,7 @@ class TransactionForm
                 TextInput::make('total_price')
                     ->required()
                     ->numeric()
-                    ->prefix('$'),
+                    ->prefix('Rp'),
                 Select::make('status')
                     ->options([
             'pending' => 'Pending',

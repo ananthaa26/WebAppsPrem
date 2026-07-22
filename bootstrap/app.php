@@ -13,6 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->validateCsrfTokens(except: [
             'api/telegram/webhook',
+            'api/payment/callback/deposit',
+            'api/payment/callback/transaction',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

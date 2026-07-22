@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DepositController;
 
 Route::get('/', function () {
     $categories = \App\Models\ProductCategory::where('is_active', true)->orderBy('sort_order')->get();
@@ -63,7 +64,8 @@ Route::get('/akun', function () {
     $transactions = \App\Models\Transaction::where('user_id', auth()->id())
                     ->with(['product', 'variant'])
                     ->latest()
-                    ->paginate(10);
+                    ->paginate(10, ['*'], 'pesanan_page');
+                    
     return view('akun', compact('transactions'));
 });
 
@@ -123,14 +125,24 @@ Route::get('/akun/setting', function () {
 
 Route::get('/akun/deposit', function () {
     if (!auth()->check()) return redirect('/auth');
-    return view('deposit');
+    
+    $deposits = \App\Models\Deposit::where('user_id', auth()->id())
+                    ->latest()
+                    ->paginate(10);
+                    
+    return view('deposit', compact('deposits'));
 });
+
+Route::post('/akun/deposit/checkout', [DepositController::class, 'checkout'])->middleware('auth');
+Route::post('/api/payment/callback/deposit', [DepositController::class, 'callback']);
 
 Route::post('/akun/setting/profile', [AuthController::class, 'updateProfile']);
 Route::post('/akun/setting/password', [AuthController::class, 'updatePassword']);
 Route::delete('/akun/setting/delete', [AuthController::class, 'deleteAccount']);
 
-Route::post('/checkout', [\App\Http\Controllers\CheckoutController::class, 'process'])->middleware('auth');
+Route::post('/checkout', [\App\Http\Controllers\CheckoutController::class, 'process']);
+Route::post('/api/payment/callback/transaction', [\App\Http\Controllers\CheckoutController::class, 'callback']);
+Route::post('/pesanan/rate', [\App\Http\Controllers\CheckoutController::class, 'rateTransaction']);
 
 Route::get('/api/pesanan/stream', function (\Illuminate\Http\Request $request) {
     $invoice = $request->query('invoice');

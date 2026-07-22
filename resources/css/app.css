@@ -275,7 +275,7 @@ img{display:block;max-width:100%;height:auto}
 .modal-overlay.show { display: block; opacity: 1; }
 .modal-box {
     position: fixed; bottom: -100%; left: 0; right: 0; background: var(--bg); border-top-left-radius: 20px; border-top-right-radius: 20px;
-    z-index: 101; max-height: 90vh; transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 101; max-height: 82vh; transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 -10px 40px rgba(0,0,0,0.5); border-top: 1px solid var(--border);
     display: flex; flex-direction: column;
 }
@@ -283,7 +283,7 @@ img{display:block;max-width:100%;height:auto}
 
 .m-scroll {
     overflow-y: auto; overflow-x: hidden;
-    padding: 24px 24px 0; flex: 1;
+    padding: 24px 24px 30px; flex: 1;
 }
 
 .modal-close {
